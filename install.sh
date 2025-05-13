@@ -40,13 +40,13 @@ source /root/.profile
 foundryup &>/dev/null
 
 curl -fsSL https://bun.sh/install | bash &>/dev/null
-echo 'export BUN_INSTALL="$HOME/.bun"' >> /root/.profile
+echo 'export BUN_INSTALL="/home/config/docker/docker-compose/go/.bun"' >> /root/.profile
 echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> /root/.profile
 source /root/.profile
 
 echo "Создаем и компилируем Trap"
-mkdir -p /home/config/docker/docker-compose/go/drosera
-cd /home/config/docker/docker-compose/go/drosera
+mkdir -p drosera
+cd drosera
 forge init -t drosera-network/trap-foundry-template &>/dev/null
 bun install &>/dev/null
 source /root/.bashrc
@@ -65,7 +65,7 @@ else
     echo "Созадаем новую трапу."
 fi
 
-config_file=~/home/config/docker/docker-compose/go/drosera/drosera.toml
+config_file=~/drosera/drosera.toml
 if [ -n "$new_rpc" ]; then
     sed -i "s|^ethereum_rpc = \".*\"|ethereum_rpc = \"$new_rpc\"|" "$config_file"
 else
@@ -87,13 +87,7 @@ fi
 DROSERA_PRIVATE_KEY="$privkey" drosera apply
 drosera dryrun
 echo "Сделали Трапу приватной и приязали к кошельку"
-echo "Устанавливаем CLI оператора"
-cd /home/config/docker/docker-compose/go/drosera
-curl -s -LO https://github.com/drosera-network/releases/releases/download/v1.16.2/drosera-operator-v1.16.2-x86_64-unknown-linux-gnu.tar.gz &>/dev/null
-tar -xvf drosera-operator-v1.16.2-x86_64-unknown-linux-gnu.tar.gz &>/dev/null
-./drosera-operator --version
-rm drosera-operator-v1.16.2-x86_64-unknown-linux-gnu.tar.gz
-sudo cp drosera-operator /usr/bin
+cd ~
 
 drosera-operator register --eth-rpc-url https://ethereum-holesky-rpc.publicnode.com --eth-private-key "$privkey"
 
@@ -121,7 +115,7 @@ User=$USER
 Restart=always
 RestartSec=15
 LimitNOFILE=65535
-ExecStart=$(which drosera-operator) node --db-file-path $HOME/.drosera.db --network-p2p-port 31313 --server-port 31314 \
+ExecStart=$(which drosera-operator) node --db-file-path /home/config/docker/docker-compose/go/.drosera.db --network-p2p-port 31313 --server-port 31314 \
     --eth-rpc-url $new_rpc \
     --eth-backup-rpc-url https://1rpc.io/holesky \
     --drosera-address 0xea08f7d533C2b9A62F40D5326214f39a8E3A32F8 \
@@ -138,4 +132,5 @@ sudo systemctl daemon-reload
 sudo systemctl enable drosera
 sudo systemctl start drosera
 
+echo "Установка завершена. Сервис запущен. Смотреть логи можно через journalctl -u drosera.service -f"
 echo "Установка завершена. Сервис запущен. Смотреть логи можно через journalctl -u drosera.service -f"
